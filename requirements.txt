@@ -1,0 +1,9 @@
+requests
+pandas
+matplotlib
+python-dotenv
+requests
+pandas
+matplotlib
+python-dotenv
+streamlit
