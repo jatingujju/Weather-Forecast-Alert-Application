@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
 
 # -----------------------------------
 # PAGE CONFIG
@@ -18,11 +17,11 @@ st.set_page_config(
 st.title("🌦 Weather Forecast & Alert System")
 
 st.markdown(
-    "### Interactive Weather Analytics Dashboard"
+    "### Interactive Weather Monitoring Dashboard"
 )
 
 # -----------------------------------
-# LOAD DATA
+# LOAD DATASET
 # -----------------------------------
 try:
     df = pd.read_csv("data/weather_data.csv")
@@ -32,148 +31,150 @@ except Exception as e:
     st.stop()
 
 # -----------------------------------
-# DATA CLEANING
+# SIDEBAR INPUTS
 # -----------------------------------
-required_cols = ['temperature', 'humidity', 'rainfall']
+st.sidebar.header("📌 Enter Weather Details")
 
-for col in required_cols:
-
-    if col not in df.columns:
-        st.error(f"❌ Column '{col}' not found")
-        st.stop()
-
-    df[col] = pd.to_numeric(
-        df[col],
-        errors='coerce'
-    ).fillna(0)
-
-# -----------------------------------
-# SIDEBAR
-# -----------------------------------
-st.sidebar.header("📌 Dashboard Controls")
-
-num_rows = st.sidebar.slider(
-    "Select Number of Rows",
-    min_value=5,
-    max_value=len(df),
-    value=10
-)
-
-graph_type = st.sidebar.selectbox(
-    "Select Graph",
+# LOCATION SELECTOR
+location = st.sidebar.selectbox(
+    "📍 Select Location",
     [
-        "Temperature",
-        "Humidity",
-        "Rainfall"
+        "Mumbai",
+        "Delhi",
+        "Pune",
+        "Bangalore",
+        "Hyderabad",
+        "Chennai",
+        "Kolkata"
     ]
 )
 
-show_data = st.sidebar.checkbox(
-    "Show Dataset",
-    value=True
+# TEMPERATURE INPUT
+temperature = st.sidebar.number_input(
+    "🌡 Temperature (°C)",
+    min_value=-10,
+    max_value=60,
+    value=30
+)
+
+# HUMIDITY INPUT
+humidity = st.sidebar.slider(
+    "💧 Humidity (%)",
+    min_value=0,
+    max_value=100,
+    value=70
+)
+
+# RAINFALL INPUT
+rainfall = st.sidebar.number_input(
+    "🌧 Rainfall (mm)",
+    min_value=0,
+    max_value=500,
+    value=10
 )
 
 # -----------------------------------
-# FILTERED DATA
+# USER INPUT DATAFRAME
 # -----------------------------------
-filtered_df = df.head(num_rows)
+weather_data = pd.DataFrame({
+    "Location": [location],
+    "Temperature": [temperature],
+    "Humidity": [humidity],
+    "Rainfall": [rainfall]
+})
+
+# -----------------------------------
+# SHOW ENTERED DATA
+# -----------------------------------
+st.subheader("📁 Entered Weather Data")
+
+st.dataframe(weather_data)
 
 # -----------------------------------
 # KPI CARDS
 # -----------------------------------
-avg_temp = round(filtered_df['temperature'].mean(), 2)
-max_temp = round(filtered_df['temperature'].max(), 2)
-
-avg_humidity = round(filtered_df['humidity'].mean(), 2)
-
-total_rainfall = round(filtered_df['rainfall'].sum(), 2)
-
 col1, col2, col3, col4 = st.columns(4)
 
-col1.metric("🌡 Avg Temp", avg_temp)
-col2.metric("🔥 Max Temp", max_temp)
-col3.metric("💧 Avg Humidity", avg_humidity)
-col4.metric("🌧 Total Rainfall", total_rainfall)
+col1.metric(
+    "📍 Location",
+    location
+)
+
+col2.metric(
+    "🌡 Temperature",
+    f"{temperature} °C"
+)
+
+col3.metric(
+    "💧 Humidity",
+    f"{humidity}%"
+)
+
+col4.metric(
+    "🌧 Rainfall",
+    f"{rainfall} mm"
+)
 
 # -----------------------------------
-# DATASET PREVIEW
-# -----------------------------------
-if show_data:
-
-    st.subheader("📁 Weather Dataset")
-
-    st.dataframe(filtered_df)
-
-# -----------------------------------
-# INTERACTIVE CHART
+# INTERACTIVE CHARTS
 # -----------------------------------
 st.subheader("📊 Weather Visualization")
 
-if graph_type == "Temperature":
-
-    st.line_chart(filtered_df['temperature'])
-
-elif graph_type == "Humidity":
-
-    st.bar_chart(filtered_df['humidity'])
-
-elif graph_type == "Rainfall":
-
-    st.area_chart(filtered_df['rainfall'])
+st.bar_chart(weather_data.set_index("Location"))
 
 # -----------------------------------
 # MATPLOTLIB GRAPH
 # -----------------------------------
-st.subheader("📉 Detailed Weather Trend")
+st.subheader("📉 Detailed Weather Analysis")
 
-fig, ax = plt.subplots(figsize=(12, 5))
+fig, ax = plt.subplots(figsize=(8, 4))
 
-ax.plot(
-    filtered_df['temperature'],
-    marker='o',
-    linewidth=2,
-    label='Temperature'
+ax.bar(
+    ["Temperature", "Humidity", "Rainfall"],
+    [temperature, humidity, rainfall]
 )
 
-ax.set_xlabel("Index")
-ax.set_ylabel("Temperature")
-ax.set_title("Temperature Trend")
-
-ax.legend()
+ax.set_title(f"Weather Analysis - {location}")
 
 st.pyplot(fig)
 
 # -----------------------------------
-# WEATHER ALERTS
+# WEATHER ALERT SYSTEM
 # -----------------------------------
-st.subheader("🚨 Weather Alerts")
+st.subheader("🚨 Weather Alert System")
 
-if max_temp > 40:
-    st.error("🔥 High Temperature Alert!")
+if st.button("Generate Weather Alert"):
 
-if total_rainfall > 50:
-    st.warning("🌧 Heavy Rainfall Alert!")
+    if temperature > 40:
+        st.error("🔥 High Temperature Alert!")
 
-if avg_humidity > 80:
-    st.info("💧 High Humidity Detected")
+    elif rainfall > 100:
+        st.warning("🌧 Heavy Rainfall Alert!")
+
+    elif humidity > 85:
+        st.info("💧 High Humidity Alert!")
+
+    else:
+        st.success("✅ Weather Conditions Normal")
 
 # -----------------------------------
-# DOWNLOAD BUTTON
+# HISTORICAL DATASET
 # -----------------------------------
-csv = filtered_df.to_csv(index=False).encode('utf-8')
+st.subheader("📋 Historical Weather Dataset")
 
-st.download_button(
-    label="⬇ Download Weather Data",
-    data=csv,
-    file_name='weather_data.csv',
-    mime='text/csv'
-)
+st.dataframe(df.head())
+
+# -----------------------------------
+# LINE CHART
+# -----------------------------------
+st.subheader("🌡 Historical Temperature Trend")
+
+if "temperature" in df.columns:
+    st.line_chart(df["temperature"])
 
 # -----------------------------------
 # FOOTER
 # -----------------------------------
 st.markdown("---")
 
-st.markdown(
-    "👨‍💻 Developed by **Jatin Gujarathi**"
-)
+st.write("👨‍💻 Developed by Jatin Gujarathi")

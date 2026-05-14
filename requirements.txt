@@ -1,9 +1,3 @@
-requests
-pandas
-matplotlib
-python-dotenv
-requests
-pandas
-matplotlib
-python-dotenv
 streamlit
+pandas
+matplotlib
